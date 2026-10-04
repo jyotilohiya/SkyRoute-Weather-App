@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SkyRoute — A premium weather and travel planning application.">
+    <title>SkyRoute — Weather &amp; Travel Planner</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+<div class="app-container">
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">
+                <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="brandGrad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                            <stop offset="0%" stop-color="#3A86FF"/>
+                            <stop offset="100%" stop-color="#0B132B"/>
+                        </linearGradient>
+                    </defs>
+                    <circle cx="16" cy="16" r="14" fill="url(#brandGrad)"/>
+                    <path d="M16 8a8 8 0 0 1 8 8" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+                    <circle cx="16" cy="16" r="3" fill="white"/>
+                    <path d="M8 22 Q 16 14 24 22" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div class="brand-text">
+                <span class="brand-name">SkyRoute</span>
+                <span class="brand-tagline">Weather &amp; Travel</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav" aria-label="Main navigation">
+            <ul>
+                <li class="active" data-target="dashboard" tabindex="0" role="button">
+                    <span class="nav-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    </span>
+                    <span class="nav-label">Dashboard</span>
+                </li>
+                <li data-target="planner" tabindex="0" role="button">
+                    <span class="nav-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </span>
+                    <span class="nav-label">Trip Planner</span>
+                </li>
+                <li data-target="compare" tabindex="0" role="button">
+                    <span class="nav-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    </span>
+                    <span class="nav-label">Compare Cities</span>
+                </li>
+                <li data-target="map" tabindex="0" role="button">
+                    <span class="nav-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+                    </span>
+                    <span class="nav-label">Interactive Map</span>
+                </li>
+                <li data-target="favorites" tabindex="0" role="button">
+                    <span class="nav-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </span>
+                    <span class="nav-label">Saved Places</span>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="sidebar-history" id="search-history-container">
+            <h3 class="sidebar-section-title">Recent Searches</h3>
+            <ul id="search-history" aria-label="Recent searches"></ul>
+        </div>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="main-content" id="main-content">
+        <canvas id="weather-canvas" class="weather-canvas" aria-hidden="true"></canvas>
+
+        <header class="top-bar" role="banner">
+            <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <div class="search-bar" role="search">
+                <div class="search-input-wrap">
+                    <span class="search-icon" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    </span>
+                    <input type="text" id="city-input" placeholder="Search for a city..." autocomplete="off" aria-label="City search">
+                </div>
+                <button id="search-btn" class="btn-primary">Search</button>
+                <button id="fav-btn" class="icon-btn" title="Save to Favourites" aria-label="Save to favourites">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </button>
+            </div>
+            <div class="unit-toggle" role="group" aria-label="Temperature unit">
+                <button id="unit-c" class="active" aria-pressed="true">°C</button>
+                <button id="unit-f" aria-pressed="false">°F</button>
+            </div>
+        </header>
+
+        <div class="dashboard-content">
+
+            <!-- DASHBOARD -->
+            <section id="dashboard" class="content-section active" aria-label="Dashboard">
+                <div id="status-message" class="empty-state">
+                    <div class="empty-state-icon">
+                        <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
+                            <circle cx="36" cy="36" r="28" fill="rgba(58,134,255,0.08)"/>
+                            <circle cx="36" cy="36" r="18" fill="rgba(58,134,255,0.14)"/>
+                            <circle cx="36" cy="14" r="5" fill="#FFB700"/>
+                            <g stroke="#3A86FF" stroke-width="2.5" stroke-linecap="round">
+                                <line x1="36" y1="4" x2="36" y2="11"/>
+                                <line x1="36" y1="61" x2="36" y2="68"/>
+                                <line x1="4" y1="36" x2="11" y2="36"/>
+                                <line x1="61" y1="36" x2="68" y2="36"/>
+                            </g>
+                        </svg>
+                    </div>
+                    <p class="empty-state-title">Discover the weather</p>
+                    <p class="empty-state-sub">Search for any city worldwide to get real-time weather, a 5-day forecast, and detailed atmospheric conditions.</p>
+                </div>
+
+                <div id="weather-data" class="weather-data hidden">
+
+                    <!-- Current Weather Card -->
+                    <div class="current-weather card" role="region" aria-label="Current weather">
+                        <div class="weather-hero">
+                            <div class="hero-location">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" class="location-pin" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                <h1 id="city-name">City</h1>
+                            </div>
+                            <p id="current-date" class="hero-date">Date</p>
+                        </div>
+                        <div class="hero-visual">
+                            <div id="current-icon-svg" class="weather-icon-large" aria-label="Weather condition illustration"></div>
+                            <div class="hero-temp-block">
+                                <h2 id="current-temp" class="current-temp">--&deg;</h2>
+                                <p id="current-desc" class="current-desc">Loading...</p>
+                            </div>
+                        </div>
+                        <div class="weather-details" aria-label="Weather details">
+                            <div class="detail-item">
+                                <span class="detail-icon" aria-hidden="true">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+                                </span>
+                                <div class="detail-text">
+                                    <span>Feels Like</span>
+                                    <strong id="feels-like">--&deg;</strong>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-icon" aria-hidden="true">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </span>
+                                <div class="detail-text">
+                                    <span>Visibility</span>
+                                    <strong id="visibility">-- km</strong>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-icon" aria-hidden="true">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/><circle cx="12" cy="12" r="4"/></svg>
+                                </span>
+                                <div class="detail-text">
+                                    <span>Humidity</span>
+                                    <strong id="humidity">--%</strong>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-icon" aria-hidden="true">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+                                </span>
+                                <div class="detail-text">
+                                    <span>Wind</span>
+                                    <strong id="wind-speed">-- m/s</strong>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-icon" aria-hidden="true">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                </span>
+                                <div class="detail-text">
+                                    <span>Pressure</span>
+                                    <strong id="pressure">-- hPa</strong>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-icon" aria-hidden="true">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                </span>
+                                <div class="detail-text">
+                                    <span>Sunrise / Sunset</span>
+                                    <strong id="sun-times">-- / --</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chart -->
+                    <div class="chart-container card" role="region" aria-label="Temperature trend">
+                        <h3 class="section-heading">Temperature Trend <span class="heading-sub">Next 24 hours</span></h3>
+                        <div class="chart-wrapper">
+                            <canvas id="tempChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Forecast -->
+                    <div class="forecast-container card" role="region" aria-label="5-day forecast">
+                        <h3 class="section-heading">5-Day Forecast</h3>
+                        <div id="forecast-list" class="forecast-list"></div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- TRIP PLANNER -->
+            <section id="planner" class="content-section hidden" aria-label="Trip planner">
+                <div class="section-header">
+                    <h2 class="page-title">Trip Planner</h2>
+                    <p class="page-subtitle">Plan your journey with real-time weather insights</p>
+                </div>
+                <div class="planner-layout">
+                    <div class="planner-form-container card">
+                        <h3 class="card-title">Trip Details</h3>
+                        <form id="planner-form" class="planner-form" novalidate>
+                            <div class="form-group">
+                                <label for="plan-dest">Destination City</label>
+                                <input type="text" id="plan-dest" required placeholder="e.g. Paris">
+                            </div>
+                            <div class="form-group">
+                                <label for="plan-start">Travel Date (Start)</label>
+                                <input type="date" id="plan-start" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="plan-end">Travel Date (End)</label>
+                                <input type="date" id="plan-end" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="plan-activity">Primary Activity</label>
+                                <select id="plan-activity">
+                                    <option value="sightseeing">Sightseeing</option>
+                                    <option value="hiking">Hiking / Nature</option>
+                                    <option value="beach">Beach / Relaxation</option>
+                                    <option value="business">Business</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn-primary btn-full">Plan My Trip</button>
+                        </form>
+                    </div>
+                    <div class="planner-results-container">
+                        <div id="plan-status" class="empty-state">
+                            <div class="empty-state-icon">
+                                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="rgba(58,134,255,0.45)" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="13" y2="18"/></svg>
+                            </div>
+                            <p class="empty-state-title">Enter trip details</p>
+                            <p class="empty-state-sub">Fill in the form to generate weather suggestions and a smart packing checklist for your trip.</p>
+                        </div>
+                        <div id="plan-results" class="hidden">
+                            <div class="card mb-20">
+                                <h3 class="card-title">Weather Outlook for <span id="plan-dest-display"></span></h3>
+                                <p id="plan-weather-summary" class="weather-summary"></p>
+                                <p class="disclaimer">Note: Accurate forecasts are only available within 5 days. Dates beyond that reflect general trend estimates.</p>
+                            </div>
+                            <div class="card">
+                                <div class="card-header-flex">
+                                    <h3 class="card-title">Smart Packing Checklist</h3>
+                                    <button id="reset-checklist" class="btn-secondary btn-sm">Reset</button>
+                                </div>
+                                <ul id="packing-list" class="packing-list"></ul>
+                                <div class="add-item-form">
+                                    <input type="text" id="custom-item" placeholder="Add a custom item...">
+                                    <button id="add-item-btn" class="btn-secondary">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- COMPARE CITIES -->
+            <section id="compare" class="content-section hidden" aria-label="Compare cities">
+                <div class="section-header">
+                    <h2 class="page-title">Compare Cities</h2>
+                    <p class="page-subtitle">Side-by-side weather comparison of up to three cities</p>
+                </div>
+                <div class="compare-controls card mb-20">
+                    <div class="compare-search">
+                        <input type="text" id="compare-city-1" placeholder="City 1" aria-label="City 1">
+                        <input type="text" id="compare-city-2" placeholder="City 2" aria-label="City 2">
+                        <input type="text" id="compare-city-3" placeholder="City 3 (optional)" aria-label="City 3">
+                        <button id="compare-btn" class="btn-primary">Compare</button>
+                    </div>
+                    <div id="compare-error" class="error-msg" role="alert"></div>
+                </div>
+                <div id="compare-results" class="compare-grid hidden" aria-live="polite"></div>
+            </section>
+
+            <!-- INTERACTIVE MAP -->
+            <section id="map" class="content-section hidden" aria-label="Interactive map">
+                <div class="section-header">
+                    <h2 class="page-title">Interactive Map</h2>
+                    <p class="page-subtitle">Explore and locate weather destinations</p>
+                </div>
+                <div class="card map-card">
+                    <div class="map-controls">
+                        <div class="search-input-wrap">
+                            <span class="search-icon" aria-hidden="true">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            </span>
+                            <input type="text" id="map-search" placeholder="Search a destination on the map..." aria-label="Map destination search">
+                        </div>
+                        <button id="map-search-btn" class="btn-primary">Locate</button>
+                    </div>
+                    <div id="map-container" class="map-container"></div>
+                </div>
+            </section>
+
+            <!-- SAVED PLACES -->
+            <section id="favorites" class="content-section hidden" aria-label="Saved places">
+                <div class="section-header">
+                    <h2 class="page-title">Saved Places</h2>
+                    <p class="page-subtitle">Your favourite cities, one click away</p>
+                </div>
+                <div class="card">
+                    <div id="favorites-list" class="favorites-grid" aria-label="Saved cities"></div>
+                    <div id="favorites-empty" class="empty-state hidden">
+                        <div class="empty-state-icon">
+                            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="rgba(58,134,255,0.45)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        </div>
+                        <p class="empty-state-title">No saved places yet</p>
+                        <p class="empty-state-sub">Search for a city on the Dashboard and click the star icon to save it here.</p>
+                    </div>
+                </div>
+            </section>
+
+        </div><!-- /.dashboard-content -->
+    </main>
+</div><!-- /.app-container -->
+<script src="script.js"></script>
+</body>
+</html>
