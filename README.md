@@ -111,4 +111,4 @@ Run the app locally (see above) and search for any city to see the full interfac
 
 ## Author
 
-Built as a B.Tech CSE internship portfolio project.
+Jyoti Lohiya
